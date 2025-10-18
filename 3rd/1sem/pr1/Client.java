@@ -12,8 +12,8 @@ class Client implements Runnable {
     @Override
     public void run() {
         try {
-            // Затримка перед приходом клієнта, умовно 5 секунд
-            Thread.sleep(5000);
+            // Імітування прибуття клієнтів в різний час
+            Thread.sleep((long) (Math.random() * 5000));
             bank.useATM(name);
         } catch (InterruptedException e) {
             System.out.println(name + ": Мене перервали.");
