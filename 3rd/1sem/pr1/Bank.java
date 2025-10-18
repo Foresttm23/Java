@@ -17,7 +17,7 @@ class Bank {
     // Використання банкомату клієнтом
     public void useATM(String clientName) {
         if (!open) {
-            System.out.println(clientName + ": Банк вже зачинений. Я піду додому.");
+            System.out.println(clientName + ": Банк вже зачинений. Я піду додому. 🏠");
             return;
         }
 
