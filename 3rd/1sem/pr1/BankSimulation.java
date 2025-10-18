@@ -6,7 +6,7 @@ public class BankSimulation {
         // У банку 3 банкомати
         Bank bank = new Bank(3);
 
-        // Створюємо 8 клієнтів\потоків
+        // Імітуємо клієнтів на день, умовно 8
         Thread[] clients = new Thread[8];
         for (int i = 0; i < clients.length; i++) {
             clients[i] = new Thread(new Client("Клієнт " + (i + 1), bank));

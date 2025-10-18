@@ -1,6 +1,5 @@
 package pr1;
 
-// Клас клієнта\потоку
 class Client implements Runnable {
     private final String name;
     private final Bank bank;
