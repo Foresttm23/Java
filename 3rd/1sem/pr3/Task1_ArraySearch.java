@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 
 public class Task1_ArraySearch {
 
-    private static final int THRESHOLD = 100;
+    private static final int THRESHOLD = 1000;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         Scanner scanner = new Scanner(System.in);
@@ -30,10 +30,15 @@ public class Task1_ArraySearch {
             System.out.println("Масив занадто великий для виведення.");
         }
 
+        // Warm up JVM
+        ForkJoinPool warmupPool = new ForkJoinPool();
+        warmupPool.invoke(new FindMinTask(matrix, 0, rows, thresholdValue));
+        solveWithWorkDealing(matrix, thresholdValue);
+
         long startStealing = System.nanoTime();
         ForkJoinPool fjPool = new ForkJoinPool();
         FindMinTask fjTask = new FindMinTask(matrix, 0, rows, thresholdValue);
-        int resultStealing = fjPool.invoke(fjTask);
+        int resultStealing = fjPool.invoke(fjTask); // Wait for result
         long endStealing = System.nanoTime();
 
         long startDealing = System.nanoTime();

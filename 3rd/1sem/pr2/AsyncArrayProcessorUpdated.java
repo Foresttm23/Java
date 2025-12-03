@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.concurrent.*;
 
-public class AsyncArrayProcessor {
+public class AsyncArrayProcessorUpdated {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -32,9 +32,36 @@ public class AsyncArrayProcessor {
 
         CopyOnWriteArraySet<Integer> dataSet = new CopyOnWriteArraySet<>();
 
+        int threadCount = 4;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+        // Racing possibility
+        Runnable producerTask = () -> {
+            while (dataSet.size() < arraySize) {
+                int val = (max - min < arraySize)
+                        ? random.nextInt(1001)
+                        : random.nextInt(max - min + 1) + min;
+
+                dataSet.add(val);
+            }
+        };
+
+        for (int i = 0; i < threadCount; i++) {
+            executor.submit(producerTask);
+        }
+
         while (dataSet.size() < arraySize) {
-            int val = (max - min < arraySize) ? random.nextInt(1001) : random.nextInt(max - min + 1) + min;
-            dataSet.add(val);
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        // Racing condition fix
+        while (dataSet.size() > arraySize) {
+            Integer last = dataSet.iterator().next();
+            dataSet.remove(last);
         }
 
         System.out.println("\n------------------------------------------------");
@@ -43,8 +70,7 @@ public class AsyncArrayProcessor {
         long startTime = System.currentTimeMillis();
 
         List<Integer> dataList = new ArrayList<>(dataSet);
-        int threadCount = 4;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
         List<Future<Double>> futures = new ArrayList<>();
 
         int chunkSize = (int) Math.ceil((double) dataList.size() / threadCount);
