@@ -19,9 +19,11 @@ public class AsyncAssignment {
 
     // Task 1
     public static CompletableFuture<Void> runTask1() {
-        CompletableFuture<char[]> arrayFuture = CompletableFuture.supplyAsync(() -> {
-            long start = System.nanoTime();
+        return CompletableFuture.runAsync(() -> {
+            System.out.println("[Task 1] Запуск генерації...");
 
+        }).thenComposeAsync(v -> CompletableFuture.supplyAsync(() -> {
+            long start = System.nanoTime();
             StringBuilder sb = new StringBuilder();
             for (char c = 'a'; c <= 'z'; c++)
                 sb.append(c);
@@ -39,56 +41,55 @@ public class AsyncAssignment {
                 int rndIndex = ThreadLocalRandom.current().nextInt(source.length());
                 chars[i] = source.charAt(rndIndex);
             }
-
             logDuration("Task 1", "Генерація масиву", start);
             return chars;
-        });
 
-        CompletableFuture<Void> printOriginal = arrayFuture.thenAcceptAsync(chars -> {
+        })).thenComposeAsync(chars -> {
+            CompletableFuture<Void> printFuture = CompletableFuture.runAsync(() -> {
+                long start = System.nanoTime();
+                StringBuilder sb = new StringBuilder("[Task 1] Початковий масив: ");
+                for (char c : chars) {
+                    sb.append(c == '\t' ? "\\t " : c + " ");
+                }
+                System.out.println(sb);
+                logDuration("Task 1", "Вивід масиву", start);
+
+            });
+
+            CompletableFuture<CharAnalysisResult> analysisFuture = CompletableFuture.supplyAsync(() -> {
+                long start = System.nanoTime();
+                List<Character> alphabetic = new ArrayList<>();
+                List<Character> spaces = new ArrayList<>();
+                List<Character> tabs = new ArrayList<>();
+                List<Character> others = new ArrayList<>();
+
+                for (char c : chars) {
+                    if (Character.isAlphabetic(c))
+                        alphabetic.add(c);
+                    else if (c == ' ')
+                        spaces.add(c);
+                    else if (c == '\t')
+                        tabs.add(c);
+                    else
+                        others.add(c);
+                }
+                logDuration("Task 1", "Аналіз символів", start);
+                return new CharAnalysisResult(alphabetic, spaces, tabs, others);
+
+            });
+
+            return printFuture.thenCombine(analysisFuture, (print, analysis) -> analysis);
+
+        }).thenAcceptAsync(result -> {
             long start = System.nanoTime();
+            System.out.println("\n[Task 1] Результати:");
+            System.out.println(" Літери: " + result.alphabetic);
+            System.out.println(" Пробіли (к-сть): " + result.spaces.size());
+            System.out.println(" Табуляції (к-сть): " + result.tabs.size());
+            System.out.println(" Інші: " + result.others);
+            logDuration("Task 1", "Вивід результатів", start);
 
-            StringBuilder sb = new StringBuilder("[Task 1] Початковий масив: ");
-            for (char c : chars) {
-                sb.append(c == '\t' ? "\\t " : c + " ");
-            }
-            System.out.println(sb);
-
-            logDuration("Task 1", "Вивід масиву", start);
         });
-
-        CompletableFuture<CharAnalysisResult> analysisFuture = arrayFuture.thenApplyAsync(chars -> {
-            long start = System.nanoTime();
-
-            List<Character> alphabetic = new ArrayList<>();
-            List<Character> spaces = new ArrayList<>();
-            List<Character> tabs = new ArrayList<>();
-            List<Character> others = new ArrayList<>();
-
-            for (char c : chars) {
-                if (Character.isAlphabetic(c))
-                    alphabetic.add(c);
-                else if (c == ' ')
-                    spaces.add(c);
-                else if (c == '\t')
-                    tabs.add(c);
-                else
-                    others.add(c);
-            }
-
-            logDuration("Task 1", "Аналіз символів", start);
-            return new CharAnalysisResult(alphabetic, spaces, tabs, others);
-        });
-
-        return printOriginal.thenCombine(analysisFuture, (voidRes, analysisRes) -> analysisRes)
-                .thenAcceptAsync(result -> {
-                    long start = System.nanoTime();
-                    System.out.println("\n[Task 1] Результати:");
-                    System.out.println(" Літери: " + result.alphabetic);
-                    System.out.println(" Пробіли (к-сть): " + result.spaces.size());
-                    System.out.println(" Табуляції (к-сть): " + result.tabs.size());
-                    System.out.println(" Інші: " + result.others);
-                    logDuration("Task 1", "Вивід результатів", start);
-                });
     }
 
     record CharAnalysisResult(List<Character> alphabetic, List<Character> spaces, List<Character> tabs,
@@ -99,14 +100,15 @@ public class AsyncAssignment {
     public static CompletableFuture<Void> runTask2() {
         long startTimeGlobal = System.nanoTime();
 
-        CompletableFuture<double[]> sequenceFuture = CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.runAsync(() -> {
             System.out.println("[Task 2] Починаємо генерацію чисел...");
+
+        }).thenComposeAsync(ignored -> CompletableFuture.supplyAsync(() -> {
             return IntStream.range(0, 20)
                     .mapToDouble(i -> ThreadLocalRandom.current().nextDouble(-100.0, 100.0))
                     .toArray();
-        });
 
-        CompletableFuture<CalculationResult> calculationFuture = sequenceFuture.thenApplyAsync(arr -> {
+        })).thenApplyAsync(arr -> {
             double maxDiff = -1.0;
             for (int i = 0; i < arr.length - 1; i++) {
                 double diff = Math.abs(arr[i] - arr[i + 1]);
@@ -115,19 +117,18 @@ public class AsyncAssignment {
                 }
             }
             return new CalculationResult(arr, maxDiff);
-        });
 
-        return calculationFuture.thenAcceptAsync(res -> {
+        }).thenAcceptAsync(res -> {
             System.out.println("[Task 2] Початкова послідовність:");
             for (double d : res.sequence) {
                 System.out.printf("%.2f; ", d);
             }
-            System.out.println();
-
             System.out.printf("%n[Task 2] Результат (max diff): %.4f%n", res.maxDifference);
 
+        }).thenRunAsync(() -> {
             double durationMs = (System.nanoTime() - startTimeGlobal) / 1_000_000.0;
             System.out.printf("[Task 2] Час роботи усіх асинхронних операцій: %.4f мс%n", durationMs);
+
         });
     }
 
