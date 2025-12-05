@@ -33,11 +33,11 @@ public class AsyncArrayProcessorUpdated {
 
         // Racing possibility
         Runnable producerTask = () -> {
+            ThreadLocalRandom threadRandom = ThreadLocalRandom.current();
             while (dataSet.size() < arraySize) {
                 int val = (max - min < arraySize)
-                        ? random.nextInt(1001)
-                        : random.nextInt(max - min + 1) + min;
-
+                        ? threadRandom.nextInt(1001)
+                        : threadRandom.nextInt(max - min + 1) + min;
                 dataSet.add(val);
             }
         };
